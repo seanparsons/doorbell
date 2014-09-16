@@ -1,0 +1,4 @@
+.cabal-sandbox
+.svn
+cabal.sandbox.config
+dist
