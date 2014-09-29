@@ -48,13 +48,17 @@ processLine action handle lastProcessed =
   do line <- IO.hGetLine handle
      putStrLn $ "Output from hGetLine: '" ++ line ++ "'"
      let lineAsText = T.pack line
-     let containsExpected = L.foldl' (\working -> \text -> working || (T.isInfixOf text lineAsText)) False expectedText  
+     let containsExpected = L.foldl' (\working -> \text -> working || (T.isInfixOf text lineAsText)) False expectedText
+     putStrLn $ show containsExpected
      currentTime <- C.getCurrentTime
+     putStrLn $ show currentTime
      let difference = C.diffUTCTime currentTime lastProcessed
+     putStrLn $ show difference
      let longEnoughPassed = 5.0 < (realToFrac difference)
+     putStrLn $ show longEnoughPassed
      let doorBellPressed = containsExpected && longEnoughPassed
-     --if doorBellPressed then action else return ()
-     if doorBellPressed then putStrLn "Magic!" else return ()
+     if doorBellPressed then action else return ()
+     --if doorBellPressed then putStrLn "Magic!" else return ()
      processLine action handle $ if doorBellPressed then currentTime else lastProcessed
 
 sendDingDong :: (V4L2.Device -> IO (Maybe T.Text)) -> String -> T.Text -> T.Text -> IO ()
