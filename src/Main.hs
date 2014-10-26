@@ -33,7 +33,9 @@ frameHandler s3Region s3Bucket device =
     IO.withBinaryFile filename IO.WriteMode (\handle -> IO.hPutBuf handle ptr size)
     let s3Filename = "s3://" ++ s3Bucket ++ "/" ++ filename
     let s3HttpUrl = "http://s3-" ++ s3Region ++ ".amazonaws.com/" ++ s3Bucket ++ "/" ++ filename
+    putStrLn "Pushing file."
     P.callProcess "aws" ["--region", s3Region, "s3", "cp", filename, s3Filename]
+    putStrLn "Pushed file."
     return $ Just $ T.pack s3HttpUrl
     )
 
@@ -72,7 +74,7 @@ sendDingDong frameAction cameraDevice applicationKey userKey = do
   manager <- HTTP.newManager TLS.tlsManagerSettings
   basicRequest <- HTTP.parseUrl "https://api.pushover.net/1/messages.json"
   let imageUrlAsList = M.maybeToList $ fmap (\url -> ("url", Just url)) imageUrl
-  let queryText = [("token", Just applicationKey), ("user", Just userKey), ("message", Just "Ding! Dong!")] ++ imageUrlAsList
+  let queryText = [("token", Just applicationKey), ("user", Just userKey), ("message", Just "Ding! Dong!"), ("url", Just url)] ++ imageUrlAsList
   let request = basicRequest 
                   { HTTP.method = "POST",
                     HTTP.queryString = BSB.toByteString $ HT.renderQueryText False queryText
