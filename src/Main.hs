@@ -74,7 +74,7 @@ sendDingDong frameAction cameraDevice applicationKey userKey = do
   manager <- HTTP.newManager TLS.tlsManagerSettings
   basicRequest <- HTTP.parseUrl "https://api.pushover.net/1/messages.json"
   let imageUrlAsList = M.maybeToList $ fmap (\url -> ("url", Just url)) imageUrl
-  let queryText = [("token", Just applicationKey), ("user", Just userKey), ("message", Just "Ding! Dong!"), ("url", Just url)] ++ imageUrlAsList
+  let queryText = [("token", Just applicationKey), ("user", Just userKey), ("message", Just "Ding! Dong!")] ++ imageUrlAsList
   let request = basicRequest 
                   { HTTP.method = "POST",
                     HTTP.queryString = BSB.toByteString $ HT.renderQueryText False queryText
