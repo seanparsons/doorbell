@@ -46,16 +46,16 @@ rtlProcess rtl433Location = (P.proc rtl433Location ["-a"]) { P.std_out = P.Creat
 processLine :: IO () -> IO.Handle -> C.UTCTime -> IO ()
 processLine action handle lastProcessed = 
   do line <- IO.hGetLine handle
-     putStrLn $ "Output from hGetLine: '" ++ line ++ "'"
+     --putStrLn $ "Output from hGetLine: '" ++ line ++ "'"
      let lineAsText = T.pack line
      let containsExpected = L.foldl' (\working -> \text -> working || (T.isInfixOf text lineAsText)) False expectedText
-     putStrLn $ show containsExpected
+     --putStrLn $ show containsExpected
      currentTime <- C.getCurrentTime
-     putStrLn $ show currentTime
+     --putStrLn $ show currentTime
      let difference = C.diffUTCTime currentTime lastProcessed
-     putStrLn $ show difference
+     --putStrLn $ show difference
      let longEnoughPassed = 5.0 < (realToFrac difference)
-     putStrLn $ show longEnoughPassed
+     --putStrLn $ show longEnoughPassed
      let doorBellPressed = containsExpected && longEnoughPassed
      if doorBellPressed then action else return ()
      --if doorBellPressed then putStrLn "Magic!" else return ()
