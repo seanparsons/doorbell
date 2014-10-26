@@ -61,9 +61,13 @@ processLine action handle lastProcessed =
      --if doorBellPressed then putStrLn "Magic!" else return ()
      processLine action handle $ if doorBellPressed then currentTime else lastProcessed
 
+catcher :: E.IOException -> IO (Maybe T.Text)
+catcher errorException = do
+  print errorException
+  return Nothing 
+
 sendDingDong :: (V4L2.Device -> IO (Maybe T.Text)) -> String -> T.Text -> T.Text -> IO ()
 sendDingDong frameAction cameraDevice applicationKey userKey = do
-  let catcher = (\_ -> return Nothing) :: E.IOException -> IO (Maybe T.Text)
   imageUrl <- E.catch (V4L2.withDevice cameraDevice frameAction) catcher
   manager <- HTTP.newManager TLS.tlsManagerSettings
   basicRequest <- HTTP.parseUrl "https://api.pushover.net/1/messages.json"
