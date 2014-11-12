@@ -26,24 +26,15 @@ import qualified Control.Exception.Base as E
 format :: V4L2.ImageFormat
 format = V4L2.ImageFormat 1024 768 V4L2.PixelJPEG V4L2.FieldNone 0 1000000 V4L2.ColorJPEG
 
-frameHandler :: String -> String -> (Maybe T.Text -> IO ()) -> V4L2.Device -> IO ()
-frameHandler s3Region s3Bucket imageSender device = 
+frameHandler :: String -> String -> String -> V4L2.Device -> IO ()
+frameHandler s3Region s3Bucket filename device = 
   V4L2.withFrame device format (\ptr -> \size -> do
-    currentTime <- C.getCurrentTime
-    let filename = (TF.formatTime SL.defaultTimeLocale "%c" currentTime) ++ ".jpg"
-    let s3HttpUrl = "http://s3-" ++ s3Region ++ ".amazonaws.com/" ++ s3Bucket ++ "/" ++ filename
-    let writeAndSendFile = do
-                              putStrLn "Pushing file."
-                              IO.withBinaryFile filename IO.WriteMode (\handle -> IO.hPutBuf handle ptr size)
-                              let s3Filename = "s3://" ++ s3Bucket ++ "/" ++ filename
-                              P.callProcess "aws" ["--region", s3Region, "s3", "cp", filename, s3Filename]
-                              putStrLn "Pushed file."
-
-    sendWait <- CCA.async writeAndSendFile
-    pushWait <- CCA.async $ imageSender $ Just $ T.pack s3HttpUrl
-    CCA.wait sendWait
-    CCA.wait pushWait
-    )
+    putStrLn "Pushing file."
+    let s3Filename = "s3://" ++ s3Bucket ++ "/" ++ filename
+    IO.withBinaryFile filename IO.WriteMode (\handle -> IO.hPutBuf handle ptr size)
+    P.callProcess "aws" ["--region", s3Region, "s3", "cp", filename, s3Filename]
+    putStrLn "Pushed file."
+  )
 
 expectedText :: [T.Text]
 expectedText = ["96 37 f0 : 10010110 00110111 11110000", "34 e4 00 : 00110100 11100100 00000000", "34 e4 01"]
@@ -72,13 +63,12 @@ processLine action handle lastProcessed = do
 catcher :: E.IOException -> IO ()
 catcher = print
 
-sendPushOverMessage :: T.Text -> T.Text -> Maybe T.Text -> IO ()
+sendPushOverMessage :: T.Text -> T.Text -> T.Text -> IO ()
 sendPushOverMessage applicationKey userKey imageUrl = do
   putStrLn "Sending message to Pushover."
   manager <- HTTP.newManager TLS.tlsManagerSettings
   basicRequest <- HTTP.parseUrl "https://api.pushover.net/1/messages.json"
-  let imageUrlAsList = M.maybeToList $ fmap (\url -> ("url", Just url)) imageUrl
-  let queryText = [("token", Just applicationKey), ("user", Just userKey), ("message", Just "Ding! Dong!")] ++ imageUrlAsList
+  let queryText = [("token", Just applicationKey), ("user", Just userKey), ("message", Just "Ding! Dong!"), ("url", Just imageUrl)]
   let request = basicRequest 
                   { HTTP.method = "POST",
                     HTTP.queryString = BSB.toByteString $ HT.renderQueryText False queryText
@@ -87,10 +77,16 @@ sendPushOverMessage applicationKey userKey imageUrl = do
   HTTP.closeManager manager
   putStrLn "Sent message to Pushover."
 
-sendDingDong :: (V4L2.Device -> IO ()) -> String -> (Maybe T.Text -> IO ()) -> IO ()
-sendDingDong frameAction cameraDevice sender = do
-  let failHandler = catcher >> (\_ -> sender Nothing)
-  E.catch (V4L2.withDevice cameraDevice frameAction) failHandler
+sendDingDong :: String -> String -> (String -> V4L2.Device -> IO ()) -> String -> (T.Text -> IO ()) -> IO ()
+sendDingDong s3Region s3Bucket frameAction cameraDevice sender = do
+  currentTime <- C.getCurrentTime
+  let filename = (TF.formatTime SL.defaultTimeLocale "%c" currentTime) ++ ".jpg"
+  let s3HttpUrl = "http://s3-" ++ s3Region ++ ".amazonaws.com/" ++ s3Bucket ++ "/" ++ filename
+  sendWait <- CCA.async $ E.catch (V4L2.withDevice cameraDevice $ frameAction filename) catcher
+  pushWait <- CCA.async $ E.catch (sender $ T.pack s3HttpUrl) catcher
+  CCA.wait sendWait
+  CCA.wait pushWait
+  
 
 runApplication :: T.Text -> T.Text -> String -> String -> String -> String -> IO ()
 runApplication applicationKey userKey rtl433Location cameraDevice s3Region s3Bucket = do
@@ -98,7 +94,7 @@ runApplication applicationKey userKey rtl433Location cameraDevice s3Region s3Buc
   (_, _, Just outHandle, _) <- P.createProcess (rtlProcess rtl433Location)
   IO.hSetBuffering outHandle IO.LineBuffering
   let sendMessage = sendPushOverMessage applicationKey userKey
-  processLine (sendDingDong (frameHandler s3Region s3Bucket sendMessage) cameraDevice sendMessage) outHandle $ C.UTCTime (CA.ModifiedJulianDay 0) 0
+  processLine (sendDingDong s3Region s3Bucket (frameHandler s3Region s3Bucket) cameraDevice sendMessage) outHandle $ C.UTCTime (CA.ModifiedJulianDay 0) 0
 
 main :: IO ()
 main =
