@@ -105,5 +105,5 @@ main =
      s3Region <- SE.getEnv "S3_REGION"
      s3Bucket <- SE.getEnv "S3_BUCKET"
      let app = runApplication (T.pack pushoverApplicationKey) (T.pack pushoverUserKey) rtl433Location cameraDevice s3Region s3Bucket
-     CM.forever $ E.catch app catcher
+     E.catch app catcher
 
