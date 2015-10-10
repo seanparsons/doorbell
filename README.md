@@ -19,11 +19,13 @@ Currently this uses the [Pushover](https://pushover.net/) service and app for th
 potentially I might add to this so that something in the house still warns us because sometimes there is a large
 delay until the notification arrives.
 
-There's some S3 integration for uploading a picture taken with a camera, but that needs fixing currently.
-
 #### How does it work?
 
 All the app does is run the rtl_433 command line tool in its listen mode,
 then watches the output for certain strings that match the hardware doorbell.
-Once one of those is seen (modulo some deduplication detection) it then snaps a pic,
-uploads that to S3 and fires off the notification to Pushover.
+Once one of those is seen (modulo some deduplication detection) it then plays
+a sound and fires off the notification to Pushover.
+
+#### Also
+
+Doorbell sound comes from here: [http://www.orangefreesounds.com/door-chime-sound/](http://www.orangefreesounds.com/door-chime-sound/)
