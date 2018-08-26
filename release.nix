@@ -37,6 +37,7 @@ let
 
   # More exotic overrides go here
   manualOverrides = haskellPackagesNew: haskellPackagesOld: {
+    doorbell = pkgs.haskell.lib.addBuildDepend haskellPackagesOld.doorbell [pkgs.rtl_433 pkgs.ffmpeg-full];
   };
 
   config = {

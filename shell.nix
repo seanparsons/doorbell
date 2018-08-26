@@ -7,7 +7,7 @@ let
     (pkgs.writeScriptBin "rebuild-nix" ''
       #!/usr/bin/env bash
       cd $(${pkgs.git}/bin/git rev-parse --show-toplevel)/nix
-      ${pkgs.haskellPackages.cabal2nix}/bin/cabal2nix --extra-arguments rtl_433 --extra-arguments mpg123 .. > doorbell.nix
+      ${pkgs.haskellPackages.cabal2nix}/bin/cabal2nix .. > doorbell.nix
     '')
     (pkgs.writeScriptBin "ghcid-watch" ''
       #!/usr/bin/env bash
