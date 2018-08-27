@@ -24,7 +24,7 @@ import qualified Network.HTTP.Client.TLS as TLS
 import qualified Control.Exception.Base as E
 
 expectedText :: [T.Text]
-expectedText = ["96 37 f0 : 10010110 00110111 11110000", "34 e4 00 : 00110100 11100100 00000", "34 e4 01"]
+expectedText = ["96 37 f0 : 10010110 00110111 1111", "34 e4 00 : 00110100 11100100 00000", "34 e4 01"]
 
 rtlProcess :: String -> PI.CreateProcess
 rtlProcess rtl433Path = (P.proc rtl433Path ["-a", "-q"]) { P.std_out = P.CreatePipe, P.std_err = P.CreatePipe }
