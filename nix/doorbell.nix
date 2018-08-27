@@ -1,6 +1,6 @@
 { mkDerivation, async, base, blaze-builder, bytestring, http-client
-, http-client-tls, http-types, mpg123, old-locale, process
-, resourcet, rtl_433, stdenv, text, time, transformers
+, http-client-tls, http-types, old-locale, process, resourcet
+, stdenv, text, time, transformers
 }:
 mkDerivation {
   pname = "doorbell";

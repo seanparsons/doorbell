@@ -26,8 +26,8 @@ import qualified Control.Exception.Base as E
 expectedText :: [T.Text]
 expectedText = ["96 37 f0 : 10010110 00110111 11110000", "34 e4 00 : 00110100 11100100 00000", "34 e4 01"]
 
-rtlProcess :: PI.CreateProcess
-rtlProcess = (P.proc "rtl_433" ["-a"]) { P.std_out = P.CreatePipe, P.std_err = P.CreatePipe }
+rtlProcess :: String -> PI.CreateProcess
+rtlProcess rtl433Path = (P.proc rtl433Path ["-a"]) { P.std_out = P.CreatePipe, P.std_err = P.CreatePipe }
 
 processLine :: IO () -> IO.Handle -> C.UTCTime -> IO ()
 processLine action handle lastProcessed = do
@@ -45,11 +45,11 @@ processLine action handle lastProcessed = do
   CM.unless containsExpected $ do
     processLine action handle lastProcessed
 
-playDoorBellSound :: IO ()
-playDoorBellSound = CM.void $ CC.forkIO $ do
+playDoorBellSound :: String -> IO ()
+playDoorBellSound ffPlayPath = CM.void $ CC.forkIO $ do
   time <- C.getCurrentTime
   putStrLn ("Doorbell pressed at " ++ (show time))
-  P.callProcess "ffplay" ["-autoexit", "-nodisp", "-loglevel", "quiet", "doorbell.mp3"]
+  P.callProcess ffPlayPath ["-autoexit", "-nodisp", "-loglevel", "quiet", "doorbell.mp3"]
 
 catcher :: E.IOException -> IO ()
 catcher = print
@@ -57,9 +57,13 @@ catcher = print
 runApplication :: IO ()
 runApplication = do
   putStrLn "Starting up!"
-  (_, _, Just outHandle, _) <- P.createProcess rtlProcess
+  rtl433Path <- fmap (M.fromMaybe "rtl_433") $ SE.lookupEnv "RTL_433_PATH"
+  putStrLn ("rtl433Path set to " ++ rtl433Path)
+  ffPlayPath <- fmap (M.fromMaybe "ffplay") $ SE.lookupEnv "FFPLAY_PATH"
+  putStrLn ("ffPlayPath set to " ++ ffPlayPath)
+  (_, _, Just outHandle, _) <- P.createProcess (rtlProcess rtl433Path)
   IO.hSetBuffering outHandle IO.LineBuffering
-  processLine playDoorBellSound outHandle $ C.UTCTime (CA.ModifiedJulianDay 0) 0
+  processLine (playDoorBellSound ffPlayPath) outHandle $ C.UTCTime (CA.ModifiedJulianDay 0) 0
 
 main :: IO ()
 main = do
