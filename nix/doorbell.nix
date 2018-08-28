@@ -1,6 +1,6 @@
-{ mkDerivation, async, base, blaze-builder, bytestring, http-client
-, http-client-tls, http-types, old-locale, process, resourcet
-, stdenv, text, time, transformers
+{ mkDerivation, async, base, blaze-builder, bytestring, file-embed
+, http-client, http-client-tls, http-types, old-locale, process
+, resourcet, stdenv, temporary, text, time, transformers
 }:
 mkDerivation {
   pname = "doorbell";
@@ -9,8 +9,9 @@ mkDerivation {
   isLibrary = false;
   isExecutable = true;
   executableHaskellDepends = [
-    async base blaze-builder bytestring http-client http-client-tls
-    http-types old-locale process resourcet text time transformers
+    async base blaze-builder bytestring file-embed http-client
+    http-client-tls http-types old-locale process resourcet temporary
+    text time transformers
   ];
   license = stdenv.lib.licenses.mpl20;
 }
