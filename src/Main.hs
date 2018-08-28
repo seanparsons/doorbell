@@ -60,16 +60,18 @@ catcher :: E.IOException -> IO ()
 catcher = print
 
 runApplication :: IO ()
-runApplication = IOT.withSystemTempFile "doorbell.mp3" $ \doorbellFile -> \doorbellHandle -> do
-  putStrLn "Starting up!"
-  BS.hPut doorbellHandle doorbellSound
-  rtl433Path <- fmap (M.fromMaybe "rtl_433") $ SE.lookupEnv "RTL_433_PATH"
-  putStrLn ("rtl433Path set to " ++ rtl433Path)
-  ffPlayPath <- fmap (M.fromMaybe "ffplay") $ SE.lookupEnv "FFPLAY_PATH"
-  putStrLn ("ffPlayPath set to " ++ ffPlayPath)
-  (_, _, Just outHandle, _) <- P.createProcess (rtlProcess rtl433Path)
-  IO.hSetBuffering outHandle IO.LineBuffering
-  processLine (playDoorBellSound ffPlayPath doorbellFile) outHandle $ C.UTCTime (CA.ModifiedJulianDay 0) 0
+runApplication = do
+  IO.hSetBuffering IO.stdout IO.LineBuffering
+  IOT.withSystemTempFile "doorbell.mp3" $ \doorbellFile -> \doorbellHandle -> do
+    putStrLn "Starting up!"
+    BS.hPut doorbellHandle doorbellSound
+    rtl433Path <- fmap (M.fromMaybe "rtl_433") $ SE.lookupEnv "RTL_433_PATH"
+    putStrLn ("rtl433Path set to " ++ rtl433Path)
+    ffPlayPath <- fmap (M.fromMaybe "ffplay") $ SE.lookupEnv "FFPLAY_PATH"
+    putStrLn ("ffPlayPath set to " ++ ffPlayPath)
+    (_, _, Just outHandle, _) <- P.createProcess (rtlProcess rtl433Path)
+    IO.hSetBuffering outHandle IO.LineBuffering
+    processLine (playDoorBellSound ffPlayPath doorbellFile) outHandle $ C.UTCTime (CA.ModifiedJulianDay 0) 0
 
 main :: IO ()
 main = do
