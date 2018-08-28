@@ -60,9 +60,9 @@ catcher :: E.IOException -> IO ()
 catcher = print
 
 runApplication :: IO ()
-runApplication = IOT.withSystemTempFile "doorbell.mp3" $ \doorbellFile -> \_ -> do
+runApplication = IOT.withSystemTempFile "doorbell.mp3" $ \doorbellFile -> \doorbellHandle -> do
   putStrLn "Starting up!"
-  BS.writeFile doorbellFile doorbellSound
+  BS.hPut doorbellHandle doorbellSound
   rtl433Path <- fmap (M.fromMaybe "rtl_433") $ SE.lookupEnv "RTL_433_PATH"
   putStrLn ("rtl433Path set to " ++ rtl433Path)
   ffPlayPath <- fmap (M.fromMaybe "ffplay") $ SE.lookupEnv "FFPLAY_PATH"
