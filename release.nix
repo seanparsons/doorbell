@@ -1,4 +1,4 @@
-{ compiler ? "ghc843" }:
+{ compiler ? "ghc865", nixpkgs ? <nixpkgs> }:
 
 let
   # Disable tests for these packages
@@ -59,15 +59,7 @@ let
     };
   };
 
-  bootstrap = import <nixpkgs> { };
-  nixpkgs = builtins.fromJSON (builtins.readFile ./nixpkgs.json);
-  nixpkgssrc = bootstrap.fetchFromGitHub {
-    owner = "NixOS";
-    repo = "nixpkgs";
-    inherit (nixpkgs) rev sha256;
-  };
-  pkgs = import nixpkgssrc { inherit config; };
-
+  pkgs = import nixpkgs { inherit config; };
 in
   { doorbell = pkgs.haskell.packages.${compiler}.doorbell;
     cabal = pkgs.haskellPackages.cabal-install;

@@ -1,4 +1,4 @@
-{ compiler ? "ghc843" }:
+{ compiler ? "ghc865" }:
 
 let
   release = (import ./release.nix {inherit compiler;});

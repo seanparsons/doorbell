@@ -30,10 +30,13 @@ doorbellSound :: BS.ByteString
 doorbellSound = $(FE.embedFile "doorbell.mp3")
 
 expectedText :: [T.Text]
-expectedText = ["96 37 f0 : 10010110 00110111 1111", "34 e4 00 : 00110100 11100100 00000", "34 e4 01"]
+expectedText = ["{19}cb1b", "{17}cb3f8", "{18}cadfc", "{21}cb1bf8"]
+
+rtlParameters :: [String]
+rtlParameters = ["-v", "-X", "doorbell#1:OOK_PWM:500:1000:3300:1200,match={2}0x3,repeats>=4,bits=21"]
 
 rtlProcess :: String -> PI.CreateProcess
-rtlProcess rtl433Path = (P.proc rtl433Path ["-a", "-q"]) { P.std_out = P.CreatePipe, P.std_err = P.CreatePipe }
+rtlProcess rtl433Path = (P.proc rtl433Path rtlParameters) { P.std_out = P.CreatePipe, P.std_err = P.CreatePipe }
 
 processLine :: IO () -> IO.Handle -> C.UTCTime -> IO ()
 processLine action handle lastProcessed = do
@@ -69,9 +72,10 @@ runApplication = do
     putStrLn ("rtl433Path set to " ++ rtl433Path)
     ffPlayPath <- fmap (M.fromMaybe "ffplay") $ SE.lookupEnv "FFPLAY_PATH"
     putStrLn ("ffPlayPath set to " ++ ffPlayPath)
-    (_, _, Just outHandle, _) <- P.createProcess (rtlProcess rtl433Path)
-    IO.hSetBuffering outHandle IO.LineBuffering
-    processLine (playDoorBellSound ffPlayPath doorbellFile) outHandle $ C.UTCTime (CA.ModifiedJulianDay 0) 0
+    P.withCreateProcess (rtlProcess rtl433Path) $ \_ -> \maybeOutHandle -> \_ -> \_ -> do
+      outHandle <- M.maybe (fail "Not stdout handle.") return maybeOutHandle
+      IO.hSetBuffering outHandle IO.LineBuffering
+      processLine (playDoorBellSound ffPlayPath doorbellFile) outHandle $ C.UTCTime (CA.ModifiedJulianDay 0) 0
 
 main :: IO ()
 main = do

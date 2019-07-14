@@ -16,7 +16,7 @@ executable doorbell
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.6 && <4.12,
+  build-depends:       base,
                        time,
                        transformers,
                        process,
